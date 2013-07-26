@@ -1,4 +1,5 @@
 #include "wl-utils.h"
+#include "eventsource.h"
 
 #include <stdio.h>
 #include <stdlib.h>
