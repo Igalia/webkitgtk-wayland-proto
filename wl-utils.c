@@ -464,9 +464,10 @@ nested_compositor_init (struct nested *nested)
 
   wayland_display_source_new (nested->child_display);
 
-	if (!wl_display_add_global(nested->child_display,
-				   &wl_compositor_interface,
-				   nested, compositor_bind)) {
+	if (!wl_global_create(nested->child_display,
+                              &wl_compositor_interface,
+                              wl_compositor_interface.version,
+                              nested, compositor_bind)) {
 		fprintf(stderr, "failed to bind nested compositor\n");
 		return -1;
   }
