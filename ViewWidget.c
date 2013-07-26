@@ -29,25 +29,6 @@
 G_DEFINE_TYPE(ViewWidget, view_widget, GTK_TYPE_CONTAINER)
 
 static void
-checkEGLError (void)
-{
-  int error = eglGetError ();
-  if (error != EGL_SUCCESS) {
-    printf ("*** EGL ERROR: 0x%x\n", error);
-  }
-}
-
-static void
-checkCairoError (cairo_surface_t *cairo_surface)
-{
-  int error;
-  error = cairo_surface_status (cairo_surface);
-  if (error != CAIRO_STATUS_SUCCESS) {
-    printf ("*** CAIRO ERROR: %d\n", error);
-  }
-}
-
-static void
 post_frame_callbacks (struct nested *nested)
 {
 	struct nested_frame_callback *nc, *next;
@@ -163,7 +144,6 @@ view_widget_draw (GtkWidget* widget, cairo_t* cr)
   static float total_elapsed_time_ms;
 
   double draw_time_ms = 0;
-  double fps;
   unsigned int next_frame_delay;
   struct timeval last_time;
   struct timeval cur_time;

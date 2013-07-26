@@ -355,9 +355,7 @@ egl_window_surface_create (struct display *display, GtkWidget *widget)
   EGLSurface egl_surface;
   cairo_surface_t *cairo_surface;
   GtkAllocation allocation;
-  GdkDisplay *gdk_display;
   GdkWindow *gdk_window;
-  struct wl_display *wl_display;
   struct wl_surface *wl_surface;
   struct egl_window_surface *egl_window_surface;
 
@@ -367,10 +365,6 @@ egl_window_surface_create (struct display *display, GtkWidget *widget)
 	memset(egl_window_surface, 0, sizeof (struct egl_window_surface));
 
   gtk_widget_get_allocation (widget, &allocation);
-
-  gdk_display =
-    gdk_display_manager_get_default_display (gdk_display_manager_get ());
-  wl_display =  gdk_wayland_display_get_wl_display (gdk_display);
 
   gdk_window = gtk_widget_get_window (widget);
   wl_surface = gdk_wayland_window_get_wl_surface (gdk_window);
@@ -447,16 +441,15 @@ static void
 compositor_bind(struct wl_client *client,
             		void *data, uint32_t version, uint32_t id)
 {
-	wl_client_add_object(client, &wl_compositor_interface,
-			     &compositor_interface, id, data);
+  wl_client_add_object(client, &wl_compositor_interface,
+                       &compositor_interface, id, data);
 }
 
 static int
 nested_compositor_init (struct nested *nested)
 {
 	const char *extensions;
-	struct wl_event_loop *loop;
-	int fd, ret;
+	int ret;
 
 	wl_list_init(&nested->frame_callback_list);
 
