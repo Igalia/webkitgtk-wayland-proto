@@ -25,17 +25,17 @@ g_wl_event_source_check(GSource *base)
 
 static gboolean
 g_wl_event_source_dispatch(GSource *base,
-			  GSourceFunc callback,
-			  gpointer data)
+                           GSourceFunc callback,
+                           gpointer data)
 {
   WaylandEventSource *source = (WaylandEventSource *) base;
   struct wl_display *display = source->display;
-	struct wl_event_loop *loop;
+  struct wl_event_loop *loop;
 
   if (source->pfd.revents & G_IO_IN) {
-  	loop = wl_display_get_event_loop (display);
-  	wl_event_loop_dispatch (loop, -1);
-  	wl_display_flush_clients (display);
+    loop = wl_display_get_event_loop (display);
+    wl_event_loop_dispatch (loop, -1);
+    wl_display_flush_clients (display);
     source->pfd.revents = 0;
   }
 
@@ -74,7 +74,7 @@ compositor_display_source_new (struct wl_display *display)
   wl_source = (WaylandEventSource *) source;
 
   wl_source->display = display;
-	loop = wl_display_get_event_loop (display);
+  loop = wl_display_get_event_loop (display);
   wl_source->pfd.fd = wl_event_loop_get_fd (loop);
   wl_source->pfd.events = G_IO_IN | G_IO_ERR | G_IO_HUP;
   g_source_add_poll (source, &wl_source->pfd);

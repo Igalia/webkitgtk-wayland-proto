@@ -31,7 +31,7 @@
 static inline int
 backtrace(void **buffer, int size)
 {
-	return 0;
+  return 0;
 }
 #endif
 

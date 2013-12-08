@@ -14,45 +14,45 @@
 static void
 init_egl (struct Display *d)
 {
-	EGLint major, minor;
-	EGLint n;
+  EGLint major, minor;
+  EGLint n;
   int ret;
 
-	static const EGLint context_attribs[] = {
-		EGL_CONTEXT_CLIENT_VERSION, 2,
-		EGL_NONE
-	};
-	static const EGLint egl_cfg_attribs[] = {
-		EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-		EGL_RED_SIZE, 1,
-		EGL_GREEN_SIZE, 1,
-		EGL_BLUE_SIZE, 1,
-		EGL_ALPHA_SIZE, 1,
-		EGL_DEPTH_SIZE, 1,
-		EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-		EGL_NONE
-	};
+  static const EGLint context_attribs[] = {
+    EGL_CONTEXT_CLIENT_VERSION, 2,
+    EGL_NONE
+  };
+  static const EGLint egl_cfg_attribs[] = {
+    EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+    EGL_RED_SIZE, 1,
+    EGL_GREEN_SIZE, 1,
+    EGL_BLUE_SIZE, 1,
+    EGL_ALPHA_SIZE, 1,
+    EGL_DEPTH_SIZE, 1,
+    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+    EGL_NONE
+  };
 
-	d->egl_display = eglGetDisplay (d->wl_display);
+  d->egl_display = eglGetDisplay (d->wl_display);
   assert(d->egl_display);
 
-	ret = eglInitialize(d->egl_display, &major, &minor);
-	assert(ret == EGL_TRUE);
-
-	eglBindAPI(EGL_OPENGL_ES_API);
-	assert(ret == EGL_TRUE);
-
-  ret = eglChooseConfig(d->egl_display, egl_cfg_attribs, &d->egl_config, 1, &n);
-	assert(ret && n == 1);
-
-	d->egl_ctx = eglCreateContext(d->egl_display, d->egl_config, EGL_NO_CONTEXT, context_attribs);
-	assert(d->egl_ctx);
-
-	ret = eglMakeCurrent(d->egl_display, NULL, NULL, d->egl_ctx);
+  ret = eglInitialize(d->egl_display, &major, &minor);
   assert(ret == EGL_TRUE);
 
-	d->egl_device = cairo_egl_device_create(d->egl_display, d->egl_ctx);
-	assert (cairo_device_status(d->egl_device) == CAIRO_STATUS_SUCCESS);
+  eglBindAPI(EGL_OPENGL_ES_API);
+  assert(ret == EGL_TRUE);
+
+  ret = eglChooseConfig(d->egl_display, egl_cfg_attribs, &d->egl_config, 1, &n);
+  assert(ret && n == 1);
+
+  d->egl_ctx = eglCreateContext(d->egl_display, d->egl_config, EGL_NO_CONTEXT, context_attribs);
+  assert(d->egl_ctx);
+
+  ret = eglMakeCurrent(d->egl_display, NULL, NULL, d->egl_ctx);
+  assert(ret == EGL_TRUE);
+
+  d->egl_device = cairo_egl_device_create(d->egl_display, d->egl_ctx);
+  assert (cairo_device_status(d->egl_device) == CAIRO_STATUS_SUCCESS);
 }
 
 static struct Display *
@@ -61,19 +61,19 @@ display_create (void)
   GdkDisplay *gdk_display =
     gdk_display_manager_get_default_display (gdk_display_manager_get ());
 
-	struct Display *d = g_new0 (struct Display, 1);
+  struct Display *d = g_new0 (struct Display, 1);
   d->gdk_display = gdk_display;
   d->wl_display =  gdk_wayland_display_get_wl_display (gdk_display);
 
-	if (!d->wl_display) {
-		fprintf (stderr, "failed to connect to Wayland display\n");
-		g_free (d);
-		return NULL;
-	}
+  if (!d->wl_display) {
+    fprintf (stderr, "failed to connect to Wayland display\n");
+    g_free (d);
+    return NULL;
+  }
 
-	init_egl (d);
+  init_egl (d);
 
-	return d;
+  return d;
 }
 
 /* ------------- Widget ------------ */
@@ -95,12 +95,12 @@ struct  _ViewWidgetPrivate {
 };
 
 struct _ViewWidget {
-    GtkContainer parent_instance;
-    ViewWidgetPrivate *priv;
+  GtkContainer parent_instance;
+  ViewWidgetPrivate *priv;
 };
 
 struct _ViewWidgetClass {
-    GtkContainerClass parent_class;
+  GtkContainerClass parent_class;
 };
 
 G_DEFINE_TYPE(ViewWidget, view_widget, GTK_TYPE_CONTAINER)
@@ -148,13 +148,13 @@ view_widget_draw (GtkWidget* widget, cairo_t* cr)
   draw (widget, cr);
   ViewWidget *vw = VIEW_WIDGET (widget);
 
-	struct NestedFrameCallback *nc, *next;
-	wl_list_for_each_safe(nc, next, &vw->priv->compositor->frame_callback_list, link) {
-		wl_callback_send_done(nc->resource, 0);
-		wl_resource_destroy(nc->resource);
-	}
-	wl_list_init(&vw->priv->compositor->frame_callback_list);
-	wl_display_flush_clients(vw->priv->compositor->child_display);
+  struct NestedFrameCallback *nc, *next;
+  wl_list_for_each_safe(nc, next, &vw->priv->compositor->frame_callback_list, link) {
+    wl_callback_send_done(nc->resource, 0);
+    wl_resource_destroy(nc->resource);
+  }
+  wl_list_init(&vw->priv->compositor->frame_callback_list);
+  wl_display_flush_clients(vw->priv->compositor->child_display);
 
   gtk_widget_queue_draw (widget);
 
@@ -211,53 +211,53 @@ view_widget_new (void)
 static void
 launch_client (ViewWidget *vw, const char *path)
 {
-	int sv[2];
-	pid_t pid;
+  int sv[2];
+  pid_t pid;
 
   printf ("server: launching client\n");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sv) < 0) {
-		fprintf(stderr, "launch_client: "
-			"socketpair failed while launching '%s': %m\n", path);
-		exit(-1);
-	}
+  if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sv) < 0) {
+    fprintf(stderr, "launch_client: "
+            "socketpair failed while launching '%s': %m\n", path);
+    exit(-1);
+  }
 
-	pid = fork();
-	if (pid == -1) {
-		close(sv[0]);
-		close(sv[1]);
-		fprintf(stderr, "launch_client: "
-			"fork failed while launching '%s': %m\n", path);
-		exit(-1);
-	}
+  pid = fork();
+  if (pid == -1) {
+    close(sv[0]);
+    close(sv[1]);
+    fprintf(stderr, "launch_client: "
+            "fork failed while launching '%s': %m\n", path);
+    exit(-1);
+  }
 
-	if (pid == 0) {
-		int clientfd;
-		char s[32];
+  if (pid == 0) {
+    int clientfd;
+    char s[32];
 
-		clientfd = dup(sv[1]);
-		if (clientfd == -1) {
-			fprintf(stderr, "compositor: dup failed: %m\n");
-			exit(-1);
-		}
+    clientfd = dup(sv[1]);
+    if (clientfd == -1) {
+      fprintf(stderr, "compositor: dup failed: %m\n");
+      exit(-1);
+    }
 
-		snprintf(s, sizeof s, "%d", clientfd);
-		setenv("WAYLAND_SOCKET", s, 1);
+    snprintf(s, sizeof s, "%d", clientfd);
+    setenv("WAYLAND_SOCKET", s, 1);
 
-		execl(path, path, NULL);
+    execl(path, path, NULL);
 
-		fprintf(stderr, "compositor: executing '%s' failed: %m\n", path);
-		exit(-1);
-	}
+    fprintf(stderr, "compositor: executing '%s' failed: %m\n", path);
+    exit(-1);
+  }
 
-	close(sv[1]);
+  close(sv[1]);
 
-	if (!wl_client_create(vw->priv->compositor->child_display, sv[0])) {
-		close(sv[0]);
-		fprintf(stderr, "launch_client: "
-			"wl_client_create failed while launching '%s'.\n", path);
-          exit(-1);
-	}
+  if (!wl_client_create(vw->priv->compositor->child_display, sv[0])) {
+    close(sv[0]);
+    fprintf(stderr, "launch_client: "
+            "wl_client_create failed while launching '%s'.\n", path);
+    exit(-1);
+  }
 
   printf ("server: launch client finished\n");
 }

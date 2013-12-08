@@ -16,15 +16,15 @@
 struct Display {
   /* GDK display */
   GdkDisplay *gdk_display;
-  
+
   /* Wayland display */
-	struct wl_display *wl_display;
+  struct wl_display *wl_display;
 
   /* EGL display */
-	EGLDisplay egl_display;
-	EGLConfig egl_config;
-	EGLContext egl_ctx;
-	cairo_device_t *egl_device;
+  EGLDisplay egl_display;
+  EGLConfig egl_config;
+  EGLContext egl_ctx;
+  cairo_device_t *egl_device;
 };
 
 struct NestedSurface;
@@ -33,21 +33,21 @@ struct Compositor {
   struct Display *display;
   struct wl_display *child_display;
   struct NestedSurface *nested_surface;
-	struct wl_list frame_callback_list;
+  struct wl_list frame_callback_list;
 };
 
 struct NestedSurface {
-	struct wl_resource *buffer_resource;
-	struct Compositor *compositor;
-	EGLImageKHR *image;
-	GLuint texture;
-	struct wl_list link;
-	cairo_surface_t *cairo_surface;
+  struct wl_resource *buffer_resource;
+  struct Compositor *compositor;
+  EGLImageKHR *image;
+  GLuint texture;
+  struct wl_list link;
+  cairo_surface_t *cairo_surface;
 };
 
 struct NestedFrameCallback {
-	struct wl_resource *resource;
-	struct wl_list link;
+  struct wl_resource *resource;
+  struct wl_list link;
 };
 
 struct Compositor *compositor_create (struct Display *);
