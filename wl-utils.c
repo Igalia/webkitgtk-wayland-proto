@@ -201,16 +201,21 @@ paint_surface (struct nested_surface *nested_surface)
   GtkAllocation allocation;
   struct nested *nested;
 
+  glBindTexture(GL_TEXTURE_2D, nested_surface->texture);
+  checkGLError();
+  image_target_texture_2d(GL_TEXTURE_2D, nested_surface->image);
+  checkEGLError();
+
   nested = nested_surface->nested;
   gtk_widget_get_allocation (nested->widget, &allocation);
 
-  cairo_surface = nested->surface->cairo_surface;
+  cairo_surface = nested_surface->cairo_surface;
   cr = cairo_create (cairo_surface);
   cairo_rectangle (cr, 0, 0, allocation.width, allocation.height);
-	cairo_set_source_rgb (cr, 1, 0, 0);
-	cairo_fill (cr);
+  cairo_set_source_rgb (cr, 1, 0, 0);
+  cairo_fill (cr);
 
-	cairo_destroy (cr);
+  cairo_destroy (cr);
 }
 
 static void
@@ -218,64 +223,32 @@ surface_attach(struct wl_client *client,
 	       struct wl_resource *resource,
 	       struct wl_resource *buffer_resource, int32_t sx, int32_t sy)
 {
-//  printf ("server: surface_attach\n");
+        printf ("server: surface_attach\n");
 
 	struct nested_surface *surface = wl_resource_get_user_data(resource);
 	struct nested *nested = surface->nested;
 	struct wl_buffer *buffer = wl_resource_get_user_data(buffer_resource);
 	EGLint format, width, height;
-	cairo_device_t *device;
 
-	if (surface->buffer_resource)
-		wl_buffer_send_release(surface->buffer_resource);
+        if (! buffer_resource)
+                return;
 
-	surface->buffer_resource = buffer_resource;
-	if (!query_buffer(nested->egl_display, buffer,
+	if (!query_buffer(nested->egl_display, buffer_resource,
 			  EGL_TEXTURE_FORMAT, &format)) {
 		fprintf(stderr, "attaching non-egl wl_buffer\n");
 		return;
 	}
-
-	if (surface->image != EGL_NO_IMAGE_KHR)
-		destroy_image(nested->egl_display, surface->image);
-	if (surface->cairo_surface)
-		cairo_surface_destroy(surface->cairo_surface);
 
 	switch (format) {
 	case EGL_TEXTURE_RGB:
 	case EGL_TEXTURE_RGBA:
 		break;
 	default:
-		fprintf(stderr, "unhandled format: %x\n", format);
+		fprintf(stderr, "server: unhandled format: %x\n", format);
 		return;
 	}
 
-	surface->image = create_image(nested->egl_display, NULL,
-				      EGL_WAYLAND_BUFFER_WL, buffer, NULL);
-	if (surface->image == EGL_NO_IMAGE_KHR) {
-		fprintf(stderr, "failed to create img\n");
-		return;
-	}
-
-	query_buffer(nested->egl_display, buffer, EGL_WIDTH, &width);
-	query_buffer(nested->egl_display, buffer, EGL_HEIGHT, &height);
-
-//  printf ("server: attach: width: %d\n", width);
-//  printf ("server: attach: height: %d\n", height);
-
-	device = display_get_cairo_device(nested->display);
-	surface->cairo_surface = 
-		cairo_gl_surface_create_for_texture(device,
-						    CAIRO_CONTENT_COLOR_ALPHA,
-						    surface->texture,
-						    width, height);
-
-	glBindTexture(GL_TEXTURE_2D, surface->texture);
-  checkGLError();
-	image_target_texture_2d(GL_TEXTURE_2D, surface->image);
-  checkEGLError();
-
-//  paint_surface (surface);
+        surface->buffer_resource = buffer_resource;
 }
 
 static void
@@ -301,10 +274,12 @@ surface_frame(struct wl_client *client,
 		return;
 	}
 
-	callback->resource =
-		wl_client_add_object(client, &wl_callback_interface, NULL, id, callback);
-	wl_resource_set_destructor(callback->resource, destroy_nested_frame_callback);
+	callback->resource = wl_resource_create(client,
+						&wl_callback_interface, 1, id);
+	wl_resource_set_implementation(callback->resource, NULL, callback,
+				       destroy_nested_frame_callback);
 
+        // @FIXME: we probably don't need this
 	wl_list_insert(nested->frame_callback_list.prev, &callback->link);
 }
 
@@ -327,6 +302,41 @@ surface_set_input_region(struct wl_client *client,
 static void
 surface_commit(struct wl_client *client, struct wl_resource *resource)
 {
+        struct nested_surface *surface = wl_resource_get_user_data (resource);
+        struct nested *nested = surface->nested;
+        int width, height;
+	cairo_device_t *device;
+
+	if (surface->image != EGL_NO_IMAGE_KHR)
+		destroy_image(nested->egl_display, surface->image);
+
+	surface->image = create_image(nested->egl_display, NULL,
+				      EGL_WAYLAND_BUFFER_WL,
+                                      surface->buffer_resource, NULL);
+	if (surface->image == EGL_NO_IMAGE_KHR) {
+		fprintf(stderr, "server: failed to create img\n");
+		return;
+	}
+
+        // @FIXME: actual rendering
+
+	if (surface->cairo_surface)
+		cairo_surface_destroy(surface->cairo_surface);
+
+	query_buffer(nested->egl_display, surface->buffer_resource, EGL_WIDTH, &width);
+	query_buffer(nested->egl_display, surface->buffer_resource, EGL_HEIGHT, &height);
+
+        printf ("server: attach: width: %d\n", width);
+        printf ("server: attach: height: %d\n", height);
+
+	device = display_get_cairo_device(nested->display);
+	surface->cairo_surface =
+          cairo_gl_surface_create_for_texture(device,
+                                              CAIRO_CONTENT_COLOR_ALPHA,
+                                              surface->texture,
+                                              width, height);
+
+        paint_surface (surface);
 }
 
 static void
@@ -401,8 +411,8 @@ compositor_create_surface(struct wl_client *client,
 
         printf ("server: compositor_create_surface\n");
 
-  nested = wl_resource_get_user_data(resource);
-  nested_surface = malloc(sizeof(struct nested_surface));
+        nested = wl_resource_get_user_data(resource);
+        nested_surface = malloc(sizeof(struct nested_surface));
 	if (nested_surface == NULL) {
 		wl_resource_post_no_memory(resource);
 		return;
@@ -411,11 +421,6 @@ compositor_create_surface(struct wl_client *client,
 	memset(nested_surface, 0, sizeof *nested_surface);
 	nested_surface->nested = nested;
 
-/*
-  nested->surface = egl_window_surface_create (nested->display, nested->widget);
-
-	display_acquire_surface(nested->display, nested->surface, NULL);
-*/
 	glGenTextures(1, &nested_surface->texture);
 	glBindTexture(GL_TEXTURE_2D, nested_surface->texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -423,13 +428,12 @@ compositor_create_surface(struct wl_client *client,
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-/*
-	display_release_surface(nested->display, nested->surface);
-*/
 	nested_surface->resource =
-		wl_client_add_object(client, &wl_surface_interface,
-				     &surface_interface, id, nested_surface);
-	wl_resource_set_destructor(nested_surface->resource, destroy_nested_surface);
+          wl_resource_create(client, &wl_surface_interface, 1, id);
+
+	wl_resource_set_implementation(nested_surface->resource,
+				       &surface_interface, nested_surface,
+				       destroy_nested_surface);
 
 	nested->nested_surface = nested_surface;
 }
@@ -442,8 +446,13 @@ static void
 compositor_bind(struct wl_client *client,
             		void *data, uint32_t version, uint32_t id)
 {
-  wl_client_add_object(client, &wl_compositor_interface,
-                       &compositor_interface, id, data);
+	struct nested *nested = data;
+	struct wl_resource *resource;
+
+	resource = wl_resource_create(client, &wl_compositor_interface,
+				      MIN(version, 3), id);
+	wl_resource_set_implementation(resource, &compositor_interface,
+				       nested, NULL);
 }
 
 static int
@@ -456,15 +465,15 @@ nested_compositor_init (struct nested *nested)
 
 	nested->child_display = wl_display_create();
 
-  wayland_display_source_new (nested->child_display);
+        wayland_display_source_new (nested->child_display);
 
 	if (!wl_global_create(nested->child_display,
                               &wl_compositor_interface,
                               wl_compositor_interface.version,
                               nested, compositor_bind)) {
-		fprintf(stderr, "failed to bind nested compositor\n");
-		return -1;
-  }
+          fprintf(stderr, "failed to bind nested compositor\n");
+          return -1;
+        }
 
 	wl_display_init_shm(nested->child_display);
 
