@@ -22,7 +22,7 @@ server: Makefile $(SERVER_SOURCES)
 		$(SERVER_SOURCES)
 
 client: Makefile $(CLIENT_SOURCES)
-	@$(CC) $(COMMON_FLAGS) \
+	@$(CC) -lm $(COMMON_FLAGS) \
 		`pkg-config --libs --cflags $(COMMON_LIBS)` \
 		-o client \
 		$(CLIENT_SOURCES)
