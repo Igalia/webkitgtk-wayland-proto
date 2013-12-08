@@ -132,6 +132,7 @@ display_get_cairo_device(struct display *display)
 	return display->argb_device;
 }
 
+/*
 static int
 display_acquire_surface(struct display *display,
                         struct egl_window_surface *surface,
@@ -160,7 +161,9 @@ display_acquire_surface(struct display *display,
 
 	return 0;
 }
+*/
 
+ /*
 static void
 display_release_surface(struct display *display,
                         struct egl_window_surface *surface)
@@ -178,6 +181,7 @@ display_release_surface(struct display *display,
   }
 	cairo_device_release(device);
 }
+ */
 
 static EGLDisplay
 display_get_egl_display(struct display *d)
@@ -227,8 +231,7 @@ surface_attach(struct wl_client *client,
 
 	struct nested_surface *surface = wl_resource_get_user_data(resource);
 	struct nested *nested = surface->nested;
-	struct wl_buffer *buffer = wl_resource_get_user_data(buffer_resource);
-	EGLint format, width, height;
+        EGLint format;
 
         if (! buffer_resource)
                 return;

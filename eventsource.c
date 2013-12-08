@@ -12,7 +12,7 @@ typedef struct _WaylandEventSource {
 static gboolean
 g_wl_event_source_prepare(GSource *base, gint *timeout)
 {
-  WaylandEventSource *source = (WaylandEventSource *) base;
+  /* WaylandEventSource *source = (WaylandEventSource *) base; */
   *timeout = -1;
   return FALSE;
 }

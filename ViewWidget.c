@@ -122,12 +122,12 @@ draw (ViewWidget *vw, cairo_t *cr)
   if (!vw->priv->nested || !vw->priv->nested->nested_surface) {
     return;
   }
-  
+
   /* FIXME: Why do  I need this? */
   gtk_widget_get_allocation (GTK_WIDGET (vw), &allocation);
   cairo_surface_mark_dirty (vw->priv->nested->nested_surface->cairo_surface );
-	cairo_set_source_surface(cr, vw->priv->nested->nested_surface->cairo_surface, 0, 0);
-	cairo_rectangle(cr, 0, 0,	allocation.width, allocation.height);
+  cairo_set_source_surface(cr, vw->priv->nested->nested_surface->cairo_surface, 0, 0);
+  cairo_rectangle(cr, 0, 0,	allocation.width, allocation.height);
   cairo_fill(cr);
 
   /* FIXME: in the original example this is done in the main surface's
@@ -207,31 +207,32 @@ view_widget_draw (GtkWidget* widget, cairo_t* cr)
 static void
 view_widget_size_allocate(GtkWidget* widget, GtkAllocation* allocation)
 {
-  ViewWidget *vw = VIEW_WIDGET (widget);
+  /*
   GtkAllocation oldAllocation;
   gtk_widget_get_allocation(widget, &oldAllocation);
   gboolean sizeChanged = allocation->width != oldAllocation.width ||
                          allocation->height != oldAllocation.height;
 
   printf ("server: size changed: %d, %d\n", allocation->width, allocation->height);
-/*
   if (sizeChanged) {
     printf ("server: resizing egl window: not implemented\n");
   }
-*/
-  GTK_WIDGET_CLASS(view_widget_parent_class)->size_allocate(widget, allocation);
+  */
+
+  GTK_WIDGET_CLASS(view_widget_parent_class)->size_allocate(widget,
+                                                            allocation);
 }
 
 static void
 view_widget_get_preferred_width (GtkWidget* widget, gint* minimum, gint* natural)
 {
-  *minimum = *natural = 400;
+  *minimum = *natural = 250;
 }
 
 static void
 view_widget_get_preferred_height (GtkWidget* widget, gint* minimum, gint* natural)
 {
-  *minimum = *natural = 300;
+  *minimum = *natural = 250;
 }
 
 static void
@@ -247,7 +248,8 @@ view_widget_class_init (ViewWidgetClass* klass)
   widgetClass->size_allocate = view_widget_size_allocate;
   widgetClass->get_preferred_width = view_widget_get_preferred_width;
   widgetClass->get_preferred_height = view_widget_get_preferred_height;
-  widgetClass->map = view_widget_map;
+
+  // widgetClass->map = view_widget_map;
 
   g_type_class_add_private(klass, sizeof(ViewWidgetPrivate));
 }
