@@ -273,10 +273,11 @@ compositor_init (struct Compositor *c)
 
 
 struct Compositor *
-compositor_create (struct Display *d)
+compositor_create (GtkWidget *widget, struct Display *d)
 {
   struct Compositor *c = g_new0 (struct Compositor, 1);
   c->display = d;
+  c->widget = widget;
   compositor_init (c);
   return c;
 }

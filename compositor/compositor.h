@@ -34,6 +34,7 @@ struct Compositor {
   struct wl_display *child_display;
   struct NestedSurface *nested_surface;
   struct wl_list frame_callback_list;
+  GtkWidget *widget;
 };
 
 struct NestedSurface {
@@ -50,6 +51,6 @@ struct NestedFrameCallback {
   struct wl_list link;
 };
 
-struct Compositor *compositor_create (struct Display *);
+struct Compositor *compositor_create (GtkWidget *widget, struct Display *);
 
 #endif

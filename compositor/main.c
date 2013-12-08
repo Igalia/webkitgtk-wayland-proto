@@ -202,7 +202,7 @@ view_widget_new (void)
 {
   ViewWidget* vw = VIEW_WIDGET (g_object_new (TYPE_VIEW_WIDGET, NULL));
   vw->priv->display = display_create ();
-  vw->priv->compositor = compositor_create (vw->priv->display);
+  vw->priv->compositor = compositor_create (vw, vw->priv->display);
   return GTK_WIDGET(vw);
 }
 
