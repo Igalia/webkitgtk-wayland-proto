@@ -149,6 +149,8 @@ surface_commit (struct wl_client *client, struct wl_resource *resource)
                                          surface->texture,
                                          width, height);
 
+  gtk_widget_set_size_request (c->widget, width, height);
+
   glBindTexture (GL_TEXTURE_2D, surface->texture);
   image_target_texture_2d (GL_TEXTURE_2D, surface->image);
 
