@@ -289,7 +289,7 @@ static void
 surface_frame(struct wl_client *client,
 	      struct wl_resource *resource, uint32_t id)
 {
-//  printf ("server: surface_frame\n");
+        printf ("server: surface_frame\n");
 
 	struct nested_frame_callback *callback;
 	struct nested_surface *surface = wl_resource_get_user_data(resource);
@@ -399,7 +399,7 @@ compositor_create_surface(struct wl_client *client,
 	struct nested *nested;
 	struct nested_surface *nested_surface;
 
-//  printf ("server: compositor_create_surface\n");
+        printf ("server: compositor_create_surface\n");
 
   nested = wl_resource_get_user_data(resource);
   nested_surface = malloc(sizeof(struct nested_surface));
@@ -489,7 +489,7 @@ nested_compositor_init (struct nested *nested)
 		return -1;
 	}
 
-//  printf ("server: nested compositor initialized\n");
+        printf ("server: nested compositor initialized\n");
 
 	return 0;
 }

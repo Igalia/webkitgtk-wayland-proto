@@ -163,7 +163,6 @@ render_triangle(struct nested_client *client, uint32_t time)
 	rotation[0][2] =  sin(angle);
 	rotation[2][0] = -sin(angle);
 	rotation[2][2] =  cos(angle);
-//  printf ("client: rotation: %.2f\n", angle);
 
 	glClearColor(0.4, 0.4, 0.4, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -197,7 +196,8 @@ static const struct wl_callback_listener frame_listener = {
 static void
 frame_callback(void *data, struct wl_callback *callback, uint32_t time)
 {
-//  printf ("client: frame_callback start\n");
+        printf ("client: frame_callback start\n");
+
 	struct nested_client *client = data;
 
 	if (callback)
@@ -209,7 +209,8 @@ frame_callback(void *data, struct wl_callback *callback, uint32_t time)
 	render_triangle(client, time);
 
 	eglSwapBuffers(client->egl_display, client->egl_surface);
-//  printf ("client: frame_callback end\n");
+
+        printf ("client: frame_callback end\n");
 }
 
 static void
@@ -350,7 +351,7 @@ main(int argc, char **argv)
 		return -1;
 	}
 
-//  printf ("client: program started\n");
+        printf ("client: program started\n");
 
 	client = nested_client_create(400, 300);
 
@@ -360,7 +361,7 @@ main(int argc, char **argv)
 
 	nested_client_destroy(client);
 
-//  printf ("client: program finished\n");
+        printf ("client: program finished\n");
 
 	return 0;
 }
