@@ -80,12 +80,18 @@ surface_frame (struct wl_client *client,
   /* enqueue the new callback request from nested client */
   callback = g_new0 (struct NestedFrameCallback, 1);
   callback->resource = wl_resource_create (client, &wl_callback_interface, 1, id);
-  wl_resource_set_implementation (callback->resource, NULL, callback, destroy_nested_frame_callback);
+  wl_resource_set_implementation (callback->resource,
+                                  NULL,
+                                  callback,
+                                  destroy_nested_frame_callback);
 
   wl_list_insert (c->frame_callback_list.prev, &callback->link);
 
   /* the client wants to draw, so we let GTK know that it has to redraw
      the widget*/
+
+  /* @TODO: avoid queueing a widget draw until a previous request
+     have been completed */
   gtk_widget_queue_draw (c->widget);
 }
 
