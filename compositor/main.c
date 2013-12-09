@@ -73,6 +73,7 @@ display_create (void)
 
   init_egl (d);
 
+
   return d;
 }
 
@@ -113,6 +114,7 @@ view_widget_init (ViewWidget* vw)
   vw->priv = priv;
 }
 
+#if 0
 static void
 draw_dummy (GtkWidget *widget, cairo_t *cr)
 {
@@ -122,6 +124,7 @@ draw_dummy (GtkWidget *widget, cairo_t *cr)
   cairo_rectangle (cr, 0, 0, allocation.width, allocation.height);
   cairo_fill (cr);
 }
+#endif
 
 static void
 draw (GtkWidget *widget, cairo_t *cr)
@@ -145,18 +148,15 @@ draw (GtkWidget *widget, cairo_t *cr)
 static gboolean
 view_widget_draw (GtkWidget* widget, cairo_t* cr)
 {
-  draw (widget, cr);
   ViewWidget *vw = VIEW_WIDGET (widget);
 
-  struct NestedFrameCallback *nc, *next;
-  wl_list_for_each_safe(nc, next, &vw->priv->compositor->frame_callback_list, link) {
-    wl_callback_send_done(nc->resource, 0);
-    wl_resource_destroy(nc->resource);
-  }
-  wl_list_init(&vw->priv->compositor->frame_callback_list);
-  wl_display_flush_clients(vw->priv->compositor->child_display);
+  draw (widget, cr);
 
-  gtk_widget_queue_draw (widget);
+  /* let the compositor know we have rendered current frame
+     so it can throttle next frame from client */
+  compositor_frame_done (vw->priv->compositor);
+
+  g_print ("compositor: widget drawn\n");
 
   return FALSE;
 }
@@ -202,7 +202,7 @@ view_widget_new (void)
 {
   ViewWidget* vw = VIEW_WIDGET (g_object_new (TYPE_VIEW_WIDGET, NULL));
   vw->priv->display = display_create ();
-  vw->priv->compositor = compositor_create (vw, vw->priv->display);
+  vw->priv->compositor = compositor_create (GTK_WIDGET (vw), vw->priv->display);
   return GTK_WIDGET(vw);
 }
 

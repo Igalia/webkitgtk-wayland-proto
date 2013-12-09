@@ -77,11 +77,16 @@ surface_frame (struct wl_client *client,
   struct NestedSurface *surface = wl_resource_get_user_data (resource);
   struct Compositor *c = surface->compositor;
 
+  /* enqueue the new callback request from nested client */
   callback = g_new0 (struct NestedFrameCallback, 1);
   callback->resource = wl_resource_create (client, &wl_callback_interface, 1, id);
   wl_resource_set_implementation (callback->resource, NULL, callback, destroy_nested_frame_callback);
 
   wl_list_insert (c->frame_callback_list.prev, &callback->link);
+
+  /* the client wants to draw, so we let GTK know that it has to redraw
+     the widget*/
+  gtk_widget_queue_draw (c->widget);
 }
 
 static void
@@ -98,17 +103,6 @@ surface_set_input_region (struct wl_client *client,
                           struct wl_resource *region_resource)
 {
   g_print ("compositor: surface_set_input_region not implemented\n");
-}
-
-static void
-paint_surface (cairo_surface_t *surface, int width, int height)
-{
-  cairo_t *cr;
-  cr = cairo_create (surface);
-  cairo_rectangle (cr, 0, 0, width, height);
-  cairo_set_source_rgb (cr, 1, 0, 0);
-  cairo_fill (cr);
-  cairo_destroy (cr);
 }
 
 static void
@@ -153,8 +147,6 @@ surface_commit (struct wl_client *client, struct wl_resource *resource)
 
   glBindTexture (GL_TEXTURE_2D, surface->texture);
   image_target_texture_2d (GL_TEXTURE_2D, surface->image);
-
-  paint_surface (surface->cairo_surface, width, height);
 }
 
 static void
@@ -212,13 +204,12 @@ compositor_create_surface (struct wl_client *client, struct wl_resource *resourc
   c->nested_surface = surface;
 }
 
-
 static const struct wl_compositor_interface compositor_interface = {
   compositor_create_surface,
 };
 
 static void
-compositor_bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
+compositor_bind (struct wl_client *client, void *data, uint32_t version, uint32_t id)
 {
   struct Compositor *c = data;
   struct wl_resource *resource =
@@ -282,4 +273,22 @@ compositor_create (GtkWidget *widget, struct Display *d)
   c->widget = widget;
   compositor_init (c);
   return c;
+}
+
+void
+compositor_frame_done (struct Compositor *c)
+{
+  struct NestedFrameCallback *nc, *next;
+  wl_list_for_each_safe (nc, next, &c->frame_callback_list, link) {
+    wl_callback_send_done (nc->resource, 0);
+    wl_resource_destroy (nc->resource);
+  }
+  wl_list_init (&c->frame_callback_list);
+  wl_display_flush_clients (c->child_display);
+
+  if (c->nested_surface && c->nested_surface->buffer_resource) {
+    wl_resource_queue_event (c->nested_surface->buffer_resource,
+                             WL_BUFFER_RELEASE);
+    c->nested_surface->buffer_resource = NULL;
+  }
 }

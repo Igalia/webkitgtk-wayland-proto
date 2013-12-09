@@ -51,6 +51,8 @@ struct NestedFrameCallback {
   struct wl_list link;
 };
 
-struct Compositor *compositor_create (GtkWidget *widget, struct Display *);
+struct Compositor *compositor_create     (GtkWidget *widget, struct Display *);
+
+void               compositor_frame_done (struct Compositor *compositor);
 
 #endif
