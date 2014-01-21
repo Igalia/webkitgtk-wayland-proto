@@ -34,86 +34,86 @@
 static int
 set_cloexec_or_close(int fd)
 {
-	long flags;
+  long flags;
 
-	if (fd == -1)
-		return -1;
+  if (fd == -1)
+    return -1;
 
-	flags = fcntl(fd, F_GETFD);
-	if (flags == -1)
-		goto err;
+  flags = fcntl(fd, F_GETFD);
+  if (flags == -1)
+    goto err;
 
-	if (fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
-		goto err;
+  if (fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
+    goto err;
 
-	return fd;
+  return fd;
 
-err:
-	close(fd);
-	return -1;
+ err:
+  close(fd);
+  return -1;
 }
 
 int
 os_socketpair_cloexec(int domain, int type, int protocol, int *sv)
 {
-	int ret;
+  int ret;
 
 #ifdef SOCK_CLOEXEC
-	ret = socketpair(domain, type | SOCK_CLOEXEC, protocol, sv);
-	if (ret == 0 || errno != EINVAL)
-		return ret;
+  ret = socketpair(domain, type | SOCK_CLOEXEC, protocol, sv);
+  if (ret == 0 || errno != EINVAL)
+    return ret;
 #endif
 
-	ret = socketpair(domain, type, protocol, sv);
-	if (ret < 0)
-		return ret;
+  ret = socketpair(domain, type, protocol, sv);
+  if (ret < 0)
+    return ret;
 
-	sv[0] = set_cloexec_or_close(sv[0]);
-	sv[1] = set_cloexec_or_close(sv[1]);
+  sv[0] = set_cloexec_or_close(sv[0]);
+  sv[1] = set_cloexec_or_close(sv[1]);
 
-	if (sv[0] != -1 && sv[1] != -1)
-		return 0;
+  if (sv[0] != -1 && sv[1] != -1)
+    return 0;
 
-	close(sv[0]);
-	close(sv[1]);
-	return -1;
+  close(sv[0]);
+  close(sv[1]);
+  return -1;
 }
 
 int
 os_epoll_create_cloexec(void)
 {
-	int fd;
+  int fd;
 
 #ifdef EPOLL_CLOEXEC
-	fd = epoll_create1(EPOLL_CLOEXEC);
-	if (fd >= 0)
-		return fd;
-	if (errno != EINVAL)
-		return -1;
+  fd = epoll_create1(EPOLL_CLOEXEC);
+  if (fd >= 0)
+    return fd;
+  if (errno != EINVAL)
+    return -1;
 #endif
 
-	fd = epoll_create(1);
-	return set_cloexec_or_close(fd);
+  fd = epoll_create(1);
+  return set_cloexec_or_close(fd);
 }
 
 static int
 create_tmpfile_cloexec(char *tmpname)
 {
-	int fd;
+  int fd;
 
 #ifdef HAVE_MKOSTEMP
-	fd = mkostemp(tmpname, O_CLOEXEC);
-	if (fd >= 0)
-		unlink(tmpname);
+  fd = mkostemp(tmpname, O_CLOEXEC);
+  if (fd >= 0)
+    unlink(tmpname);
 #else
-	fd = mkstemp(tmpname);
-	if (fd >= 0) {
-		fd = set_cloexec_or_close(fd);
-		unlink(tmpname);
-	}
+  fd = mkstemp(tmpname);
+  if (fd >= 0) {
+    fd = set_cloexec_or_close(fd);
+    unlink(tmpname);
+  }
 #endif
 
-	return fd;
+  return fd;
 }
 
 /*
@@ -134,45 +134,45 @@ create_tmpfile_cloexec(char *tmpname)
 int
 os_create_anonymous_file(off_t size)
 {
-	static const char template[] = "/weston-shared-XXXXXX";
-	const char *path;
-	char *name;
-	int fd;
+  static const char template[] = "/weston-shared-XXXXXX";
+  const char *path;
+  char *name;
+  int fd;
 
-	path = getenv("XDG_RUNTIME_DIR");
-	if (!path) {
-		errno = ENOENT;
-		return -1;
-	}
+  path = getenv("XDG_RUNTIME_DIR");
+  if (!path) {
+    errno = ENOENT;
+    return -1;
+  }
 
-	name = malloc(strlen(path) + sizeof(template));
-	if (!name)
-		return -1;
+  name = malloc(strlen(path) + sizeof(template));
+  if (!name)
+    return -1;
 
-	strcpy(name, path);
-	strcat(name, template);
+  strcpy(name, path);
+  strcat(name, template);
 
-	fd = create_tmpfile_cloexec(name);
+  fd = create_tmpfile_cloexec(name);
 
-	free(name);
+  free(name);
 
-	if (fd < 0)
-		return -1;
+  if (fd < 0)
+    return -1;
 
-	if (ftruncate(fd, size) < 0) {
-		close(fd);
-		return -1;
-	}
+  if (ftruncate(fd, size) < 0) {
+    close(fd);
+    return -1;
+  }
 
-	return fd;
+  return fd;
 }
 
 #ifndef HAVE_STRCHRNUL
 char *
 strchrnul(const char *s, int c)
 {
-	while (*s && *s != c)
-		s++;
-	return (char *)s;
+  while (*s && *s != c)
+    s++;
+  return (char *)s;
 }
 #endif

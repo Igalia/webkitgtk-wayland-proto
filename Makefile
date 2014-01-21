@@ -5,13 +5,12 @@ COMMON_LIBS = wayland-client wayland-egl egl glesv2
 
 SERVER_SOURCES = \
 	main.c \
-	wl-utils.c \
-	ViewWidget.c \
-	os-compatibility.c \
-	eventsource.c
+	compositor.c \
+	wl-event-source.c \
+	os-compatibility.c
 
 CLIENT_SOURCES = \
-	nested-client.c
+	client.c
 
 all: server client
 
@@ -22,8 +21,8 @@ server: Makefile $(SERVER_SOURCES)
 		$(SERVER_SOURCES)
 
 client: Makefile $(CLIENT_SOURCES)
-	@$(CC) -lm $(COMMON_FLAGS) \
-		`pkg-config --libs --cflags $(COMMON_LIBS)` \
+	@$(CC) $(COMMON_FLAGS) \
+		-lm `pkg-config --libs --cflags $(COMMON_LIBS)` \
 		-o client \
 		$(CLIENT_SOURCES)
 
